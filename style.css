@@ -1,0 +1,39 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: block;
+    position: relative;
+    /* background-image: url(./img/background.jpg); */
+    /* filter: alpha(Opacity=30); 
+    opacity: 0.3; */
+    /* opacity: 0.3; */
+}
+
+body::after {
+    content: "";
+    background: url(./img/background.jpg);
+    opacity: 0.5;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    position: absolute;
+    z-index: -1;   
+}
+
+.game {
+    width: 100%;
+    height: 100vh;
+    /* background-color: #fecccb; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+canvas {
+    background-color: white;
+    border: 10px double #545454;
+}
