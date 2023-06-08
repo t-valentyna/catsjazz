@@ -1,413 +1,346 @@
-let app = new PIXI.Application({ width: 736, height: 550 });
-document.querySelector('.game').appendChild(app.view);
+let canvas, ctx;
 
-// Add loading gif
-let spinner = PIXI.Sprite.from('./img/ispinner.png');
-spinner.anchor.set(0.5);
-spinner.x = app.screen.width / 2;
-spinner.y = app.screen.height / 2;
-app.stage.addChild(spinner);
+window.onload = init;
 
-// Array of all cats and its features
-const cats = [
-    {
-        name: "cat1",
-        name_full: "cat1_full",
-        route: "kitty_hidden.png",
-        border_name: "cat1_border",
-        border_route: "kitty_border.png",
-        x: 397,
-        y: 310,
-        hitArea: [
-            64, 7,
-            63, 64,
-            10, 73,
-            6, 76,
-            16, 9,
-        ],
-    },
-    {
-        name: "cat2",
-        name_full: "cat2_full",
-        route: "mini_cat_hidden.png",
-        border_name: "cat2_border",
-        border_route: "mini_cat_border.png",
-        x: 609,
-        y: 389,
-        hitArea: [
-            29, 89,
-            19, 72,
-            15, 1,
-            25, 2,
-            44, 24,
-            73, 25,
-            95, 6,
-            104, 12,
-            93, 68,
-            53, 94,
-        ],
-    },
-    {
-        name: "cat3",
-        name_full: "cat3_full",
-        route: "cat_from_family_hidden.png",
-        border_name: "cat3_border",
-        border_route: "cat_from_family_border.png",
-        x: 0,
-        y: 171,
-        hitArea: [
-            0, 19,
-            43, -2,
-            94, 52,
-            47, 91,
-            0, 94,
-        ],
-    },
-    {
-        name: "cat4",
-        name_full: "cat4_full",
-        route: "kitty_from_family_hidden.png",
-        border_name: "cat4_border",
-        border_route: "kitty_from_family_border.png",
-        x: 150,
-        y: 75,
-        hitArea: [
-            8, 22,
-            20, 6,
-            41, 27,
-            52, 80,
-            14, 80,
-        ],
-    },
-    {
-        name: "cat5",
-        name_full: "cat5_full",
-        route: "sleeping_cat_hidden.png",
-        border_name: "cat5_border",
-        border_route: "sleeping_cat_border.png",
-        x: 396,
-        y: 431,
-        hitArea: [
-            37, 107,
-            6, 34,
-            49, 8,
-            84, 8,
-            130, 25,
-            157, 59,
-            91, 118,
-        ],
-    },
-    {
-        name: "cat6",
-        name_full: "cat6_full",
-        route: "black_white_cat_hidden.png",
-        border_name: "cat6_border",
-        border_route: "black_white_cat_border.png",
-        x: 313,
-        y: 249,
-        hitArea: [
-            44, 87,
-            6, 87,
-            8, 25,
-            20, 6,
-            38, 7,
-            44, 33,
-        ],
-    },
-    {
-        name: "cat7",
-        name_full: "cat7_full",
-        route: "cat_paw_hidden.png",
-        border_name: "cat7_border",
-        border_route: "cat_paw_border.png",
-        x: 54,
-        y: 426,
-        hitArea: [
-            15, 124,
-            28, 8,
-            53, 9,
-            124, 103,
-            118, 124,
-        ],
-    },
-    {
-        name: "cat8",
-        name_full: "cat8_full",
-        route: "cat_tail_hidden.png",
-        border_name: "cat8_border",
-        border_route: "cat_tail_border.png",
-        x: 123,
-        y: 279,
-        hitArea: [
-            48, 81,
-            53, 26,
-            140, 7,
-            181, 22,
-            181, 48,
-            99, 83,
-        ],
-    },
-    {
-        name: "cat9",
-        name_full: "cat9_full",
-        route: "brown_cat_hidden.png",
-        border_name: "cat9_border",
-        border_route: "brown_cat_border.png",
-        x: 19,
-        y: 296,
-        hitArea: [
-            33, 113,
-            10, 96,
-            8, 42,
-            70, 6,
-            98, 17,
-            79, 94,
-        ],
-    },
-    {
-        name: "cat10",
-        name_full: "cat10_full",
-        route: "white_cat_hidden.png",
-        border_name: "cat10_border",
-        border_route: "white_cat_border.png",
-        x: 509,
-        y: 191,
-        hitArea: [
-            53, 9,
-            109, 101,
-            85, 150,
-            26, 165,
-            7, 147,
-            20, 8,
-        ],
-    }
-];
-
-// Choose random 5 cats
-const chosen_cats = [];
-const chosen_cats_numbers = [];
-let chosen_cats_counter = 0;
-let temp_number = 0;
-
-do {
-    // Returns a random integer from 0 to 9:
-    temp_number = Math.floor(Math.random() * 10);
-
-    // Add cat to the list if it isn't already chosen
-    if (!chosen_cats_numbers.includes(temp_number)) {
-        chosen_cats.push(cats[temp_number]);
-        chosen_cats_numbers.push(temp_number);
-        chosen_cats_counter++;
-    };
-}
-while (chosen_cats_counter < 5);
-
-const loader = PIXI.Loader.shared; // PixiJS exposes a premade instance for you to use.
-
-// Chainable `add` to enqueue a resource
-loader.add('room', 'img/room_1.jpg')
-    .add('cat_head', 'img/cat_head.png')
-    .add('first_background', 'img/first_background.jpg')
-    .add('background_sound', 'vintage_comedy.mp3') // Music by PianoAmor from Pixabay
-    .add('meow', 'AnimalCat.mp3');
-const len = chosen_cats.length;
-for (let i = 0; i < len; i++) {
-    loader.add(chosen_cats[i]["name_full"], "img/" + chosen_cats[i]["route"])
-        .add(chosen_cats[i]["border_name"], "img/" + chosen_cats[i]["border_route"]);
+const assetsToLoadURLs = {
+    'room': 'img/room_1.jpg',
+    'firstBackground': 'img/first_background.jpg',
+    'catHead': 'img/cat_head.png',
+    'backgroundSound': 'vintage_comedy.mp3',
+    'meow': 'AnimalCat.mp3'
 };
 
-// The `load` method loads the queue of resources, and calls the passed in callback called once all
-// resources have loaded.
-loader.load((loader, resources) => {
-    // resources is an object where the key is the name of the resource loaded and the value is the resource object.
-    // They have a couple default properties:
-    // - `url`: The URL that the resource was loaded from
-    // - `error`: The error that happened when trying to load (if any)
-    // - `data`: The raw data that was loaded
-    // also may contain other properties based on the middleware that runs.
-    first_background = new PIXI.Sprite(resources.first_background.texture);
-    room = new PIXI.Sprite(resources.room.texture);
-    cat_head = new PIXI.Texture(resources.cat_head.texture);
-    background_sound = resources.background_sound.sound;
-    meow = resources.meow.sound;
-    for (let i = 0; i < len; i++) {
-        window[chosen_cats[i]["name_full"]] = new PIXI.Texture(resources[chosen_cats[i]["name_full"]].texture);
-        window[chosen_cats[i]["border_name"]] = new PIXI.Texture(resources[chosen_cats[i]["border_name"]].texture);
-    };
-});
-
-loader.onComplete.add(() => {
-    // Remove spinner image
-    app.stage.removeChild(app.stage.children[0]);
-
-    // Add counter and list of found cats
-    let counter = 0;
-    const cat_sprites_found = [];
-
-    // Add first background
-    app.stage.addChild(first_background);
-
-    // Add text
-    const style = new PIXI.TextStyle({
-        dropShadow: true,
-        dropShadowBlur: 4,
-        fill: "white",
-        fontFamily: "\"Comic Sans MS\", cursive, sans-serif",
-        fontSize: 36,
-        stroke: "#545454",
-        strokeThickness: 2
-    });
-    const start_text = new PIXI.Text('Try to find 5 cats in the room', style);
-    start_text.anchor.set(0.5);
-    start_text.x = app.screen.width / 2;
-    start_text.y = (app.screen.height / 2) - 50;
-    app.stage.addChild(start_text);
-
-    // Add the button with label
-    let btn_start = new PIXI.Graphics();
-    btn_start.lineStyle(2, 0xffffff, 1);
-    btn_start.beginFill(0x650A5A, 0.25);
-    btn_start.drawRoundedRect(247, 304, 242, 66, 16);
-    btn_start.endFill();
-    btn_start.interactive = true;
-    btn_start.buttonMode = true;
-    btn_start.on('pointerdown', StartSearch);
-    app.stage.addChild(btn_start);
-    const btn_text = new PIXI.Text('Start', style);
-    btn_text.x = 320;
-    btn_text.y = 309;
-    app.stage.addChild(btn_text);
-
-    // When click on start button
-    function StartSearch() {
-        // Remove all objects
-        btn_start.destroy();
-        while (app.stage.children[0]) { 
-            app.stage.removeChild(app.stage.children[0]); 
-        };
-
-        // Auto repeating of the main music
-        background_sound.loop = true;
-        background_sound.play();
+class Cat {
+    constructor(catObj) {
         
-        // Add background
-        app.stage.addChild(room);
-
-        // Empty array with all sprite objects
-        const cat_sprites = [];
-
-        for (let i = 0; i < len; i++) {
-            // Create sprites of cats
-            window[chosen_cats[i]["name"]] = new PIXI.Sprite(window[chosen_cats[i]["name_full"]]);
-
-            // Add new sprite to array
-            cat_sprites.push(window[chosen_cats[i]["name"]]);
-
-            // Assign coordinates, name, corresponded border texture and hit area to each sprite
-            cat_sprites[i].x = chosen_cats[i]["x"];
-            cat_sprites[i].y = chosen_cats[i]["y"];
-            cat_sprites[i].name = chosen_cats[i]["name"];
-            cat_sprites[i].border = window[chosen_cats[i]["border_name"]];
-            cat_sprites[i].hitArea = new PIXI.Polygon(chosen_cats[i]["hitArea"]);
-
-            // Opt-in to interactivity
-            cat_sprites[i].interactive = true;
-            // cat_sprites[i].buttonMode = true;
-
-            // Pointers normalize touch and mouse
-            cat_sprites[i].on('pointerdown', onClick);
-
-            app.stage.addChild(cat_sprites[i]);
-        };
-
-        // Add a rectangle for showing the score
-        let cat_score = new PIXI.Graphics();
-        cat_score.lineStyle(2, 0xffffff, 1);
-        cat_score.beginFill(0x650A5A, 0.25);
-        cat_score.drawRoundedRect(423, 5, 306, 58, 16);
-        cat_score.endFill();
-        app.stage.addChild(cat_score);
-
-        // Add 5 cat heads
-        for (let i = 1; i < 6; i++) {
-            window["cat_head_" + i] = new PIXI.Sprite(cat_head);
-            window["cat_head_" + i].x = 668 - 60 * (i - 1);
-            window["cat_head_" + i].y = 13;
-            // app.stage.addChild(window["cat_head_" + i]);
-        };
-    };
-
-    function onClick() {
-        // Meowing
-        meow.play();
-
-        // Change texture to bordered
-        this.texture = this.border;
+        this.name = new Image();
+        this.name.src = 'img/' + catObj.route;
+       
+        this.border = new Image();
+        this.border.src = 'img/' + catObj.border_route;
         
-        // Set movement to this sprite
-        let elapsed = 0.0;
-        let tmp_y = this.y;
-        this.cat_ticker = new PIXI.Ticker;
-        this.cat_ticker.add((delta) => {
-            elapsed += delta;
-            this.y = (tmp_y - 25.0) + Math.cos(elapsed/20.0) * 25.0;
-            if (elapsed > 125.0) {
-                // Remove this cat and stop ticker
-                this.visible = false;
-                this.cat_ticker.stop();
-            };
-        });
-        this.cat_ticker.start();
+        this.x = catObj.x;
+        this.y = catObj.y;
+        this.initialY = catObj.y;
+        this.hitArea = catObj.hitArea;
 
-        // Check if this cat was already clicked
-        if (!cat_sprites_found.includes(this)) {
-            // Add this sprite to the list of found cats
-            cat_sprites_found.push(this);
+        this.display = true;
+        this.move = false;
+        this.sprite = this.name;
 
-            // Refresh counter and add one cat head
-            counter++;
-            app.stage.addChild(window["cat_head_" + counter]);
+        this.elapsed = 0.0;
 
-            // Check if it was the last found cat
-            if (counter >= 5) {
-                // After 2 seconds
-                window.setTimeout(function() {
-                    // Remove all objects
-                    while (app.stage.children[0]) { 
-                        app.stage.removeChild(app.stage.children[0]); 
-                    };
+        this.boundClickHandler = this.clicked.bind(this);
 
-                    // Add first background
-                    app.stage.addChild(first_background);
+        // console.log("Cat loaded");
+    }
 
-                    // Add text
-                    const finish_text = new PIXI.Text('Congratulations! All cats have been found!', style);
-                    finish_text.anchor.set(0.5);
-                    finish_text.x = app.screen.width / 2;
-                    finish_text.y = (app.screen.height / 2) - 50;
-                    app.stage.addChild(finish_text);
+    clicked(event) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
 
-                    // Add button with label
-                    let btn_finish = new PIXI.Graphics();
-                    btn_finish.lineStyle(2, 0xffffff, 1);
-                    btn_finish.beginFill(0x650A5A, 0.25);
-                    btn_finish.drawRoundedRect(247, 304, 242, 66, 16);
-                    btn_finish.endFill();
-                    btn_finish.interactive = true;
-                    btn_finish.buttonMode = true;
+        // Begin a new path
+        ctx.beginPath();
 
-                    // When you click on the button, the page and app will reload
-                    btn_finish.on('pointerdown', function() {
-                        window.location.reload();
-                    });
-                    
-                    app.stage.addChild(btn_finish);
-                    const btn_again = new PIXI.Text('New game', style);
-                    btn_again.x = 280;
-                    btn_again.y = 309;
-                    app.stage.addChild(btn_again);
-                }, 2000 );
-            }
+        // Define the polygon path using the hitArea
+        ctx.moveTo(this.x + this.hitArea[0], this.y + this.hitArea[1]);
+        for (let i = 2; i < this.hitArea.length; i+= 2) {
+            ctx.lineTo(this.x + this.hitArea[i], this.y + this.hitArea[i + 1]);
+        }
+        ctx.closePath();
+      
+        // Check if the click was inside the cat
+        if (ctx.isPointInPath(mouseX, mouseY)) {
+            canvas.removeEventListener('click', this.boundClickHandler);
+            this.move = true;
+            this.sprite = this.border;
+
+            // Meowing
+            loadedAssets.meow.currentTime = 0;
+            loadedAssets.meow.play();
+        }
+    }
+
+    moving() {
+        // Update the counter of found cats in the first step of moving
+        if (this.elapsed === 0) {
+            counterOfFoundCats++;
+        }
+
+        this.elapsed += 1;
+        this.y = (this.initialY - 25.0) + Math.cos(this.elapsed/20.0) * 25.0;
+        if (this.elapsed > 125.0) {
+            // Remove this cat
+            this.display = false;
         };
     }
-});
+}
+
+let animationFrameId;
+
+let loadedAssets;
+const chosenCats = [];
+let counterOfFoundCats = 0;
+
+
+function init() {
+    // Get JSON file and choose 5 cats 
+    fetch('./cats.json')
+        .then(response => response.json())
+        .then(data => {
+        const cats = data;
+        const chosenCatsNumbers = [];
+        let chosenCatsCounter = 0;
+        let tempNumber = 0;
+
+        do {
+            // Returns a random integer from 0 to 9:
+            tempNumber = Math.floor(Math.random() * 10);
+
+            // Add cat to the list if it isn't already chosen
+            if (!chosenCatsNumbers.includes(tempNumber)) {
+                chosenCats.push(cats[tempNumber]);
+                chosenCatsNumbers.push(tempNumber);
+                chosenCatsCounter++;
+            };
+        }
+        while (chosenCatsCounter < 5);
+
+    // console.log(chosenCats);
+
+    // Load assets and then start game
+    loadAssets(startGame);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function startGame(assetsReadyToBeUsed) {
+    // We're ready to use all sounds, images, musics etc
+    loadedAssets = assetsReadyToBeUsed;
+    // console.log(assetsReadyToBeUsed);
+
+    drawFirstBackground();
+}
+
+function drawFirstBackground() {
+    // Remove loader
+    document.querySelector('#loader').style.display = "none";
+
+    canvas = document.querySelector('#myCanvas');
+    ctx = canvas.getContext('2d');
+
+    ctx.drawImage(loadedAssets.firstBackground, 0, 0);
+
+    drawText('Try to find 5 cats in the room', 225);
+    drawButton('Start', StartSearch);
+}
+
+function StartSearch() {
+    // Turn on the music
+    loadedAssets.backgroundSound.loop = true;
+    loadedAssets.backgroundSound.play();
+
+    // Make cats clickable
+    for (let cat in loadedAssets.cats) {
+        canvas.addEventListener('click', loadedAssets.cats[cat].boundClickHandler);
+    }
+
+    animationFrameId = requestAnimationFrame(mainLoop);
+}
+
+function mainLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(loadedAssets.room, 0, 0);
+    // console.log(loadedAssets);
+
+    // Draw cats and move them for next drawing
+    for (let cat in loadedAssets.cats) {
+        if (loadedAssets.cats[cat].display) {
+            ctx.drawImage(loadedAssets.cats[cat].sprite, loadedAssets.cats[cat].x, loadedAssets.cats[cat].y);
+
+            if (loadedAssets.cats[cat].move) {
+                loadedAssets.cats[cat].moving();
+            }
+        }
+    }
+
+    // Draw a rectangle for showing the score
+    drawRoundedRect(423, 5, 306, 58, 16);
+
+    // Add 5 cat heads
+    for (let i = 0; i < counterOfFoundCats; i++) {
+        ctx.drawImage(loadedAssets.catHead, 668 - 60 * i, 13);
+    }
+
+    // Check if it was the last found cat
+        if (counterOfFoundCats >= 5) {
+            // After 2 seconds
+            setTimeout(gameOver, 2000);
+        }
+
+    // ask for a new animation frame
+    animationFrameId = requestAnimationFrame(mainLoop);
+}
+
+function gameOver() {
+    // Stop the animation frame
+    cancelAnimationFrame(animationFrameId);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.drawImage(loadedAssets.firstBackground, 0, 0);
+
+    drawText('Congratulations! All cats have been found!', 225);
+    drawButton('New game', StartNewGame);
+}
+
+function StartNewGame() {
+    window.location.reload();
+}
+
+function drawText(text, y) {
+    ctx.save();
+
+    ctx.font = `36px "Comic Sans MS", cursive, sans-serif`;
+    ctx.fillStyle = 'white';
+    ctx.strokeStyle = '#545454';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 4;
+    ctx.shadowColor = 'black';
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+
+    // Calculate the x coordinate of the starting point of the text
+    const textWidth = ctx.measureText(text).width;
+    const x = canvas.width / 2 - textWidth / 2;
+
+    ctx.strokeText(text, x, y);
+    ctx.fillText(text, x, y);
+
+    ctx.restore();
+}
+
+function drawRoundedRect(x, y, width, height, radius) {
+    ctx.save();
+    ctx.fillStyle = "rgba(101,10,90, 0.25)";
+    ctx.strokeStyle = "rgb(255,255,255)";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.arcTo(x + width, y, x + width, y + radius, radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+    ctx.lineTo(x + radius, y + height);
+    ctx.arcTo(x, y + height, x, y + height - radius, radius);
+    ctx.lineTo(x, y + radius);
+    ctx.arcTo(x, y, x + radius, y, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawButton(text, action) {
+    ctx.save();
+
+    // Draw the rounded rectangle
+    const x = 247;
+    const y = 304;
+    const width = 242;
+    const height = 66;
+    const radius = 16;
+
+    drawRoundedRect(x, y, width, height, radius);
+
+    drawText(text, 349);
+
+    ctx.restore();
+
+    // Add a click event listener to the canvas
+    canvas.addEventListener('click', buttonClicked);
+    
+    function buttonClicked(event) {
+        const mouseX = event.offsetX;
+        const mouseY = event.offsetY;
+      
+        // Check if the click was inside the button
+        if (mouseX >= x && mouseX <= x + width &&
+            mouseY >= y && mouseY <= y + height) {
+                canvas.removeEventListener('click', buttonClicked);
+                action();
+        }
+    }
+}
+
+function loadAssets(callback) {
+    // here we should load the sounds, the sprite sheets etc.
+    // then at the end call the callback function    
+    loadAssetsUsingHowlerAndNoXhr(assetsToLoadURLs, callback);
+}
+
+function isImage(url) {
+    return (url.match(/\.(jpeg|jpg|gif|png)$/) != null);
+}
+
+function isAudio(url) {
+    return (url.match(/\.(mp3|ogg|wav)$/) != null);
+}
+
+function loadAssetsUsingHowlerAndNoXhr(assetsToBeLoaded, callback) {
+    let assetsLoaded = {};
+    let loadedAssets = 0;
+    let numberOfAssetsToLoad = 10;
+
+    // define ifLoad function
+    let ifLoad = function () {
+        if (++loadedAssets >= numberOfAssetsToLoad) {
+            callback(assetsLoaded);
+        }
+        // console.log("Loaded asset " + loadedAssets);
+    };
+
+    // get num of assets to load
+    for (let name in assetsToBeLoaded) {
+        numberOfAssetsToLoad++;
+    }
+
+    // console.log("Nb assets to load: " + numberOfAssetsToLoad);
+
+    for (let name in assetsToBeLoaded) {
+        // console.log(assetsLoaded);
+        let url = assetsToBeLoaded[name];
+        // console.log("Loading " + url);
+        if (isImage(url)) {
+            assetsLoaded[name] = new Image();
+
+            assetsLoaded[name].onload = ifLoad;
+            // will start async loading. 
+            assetsLoaded[name].src = url;
+        } else {
+            // We assume the asset is an audio file
+            // console.log("loading " + name + " buffer : " + assetsToBeLoaded[name].loop);
+            assetsLoaded[name] = new Audio(url);
+            assetsLoaded[name].addEventListener('canplaythrough', function() {
+                ifLoad();
+              });
+        } // if
+
+    }
+
+    // Load cats
+    console.log(chosenCats);
+    assetsLoaded.cats = {};
+    for (let cat of chosenCats) {
+        // console.log(cat);
+        assetsLoaded.cats[cat.name_full] = new Cat(cat);
+        assetsLoaded.cats[cat.name_full].name.onload = ifLoad; 
+        assetsLoaded.cats[cat.name_full].border.onload = ifLoad; 
+    }
+    // console.log(assetsLoaded);
+}
